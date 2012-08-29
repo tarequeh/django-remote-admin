@@ -5,17 +5,17 @@ define(function (require){
 
         // Fields
         Fields: {
-            Button: require('hbs!./templates/button'),
-            CheckBoxInput: require('hbs!./templates/checkbox_input'),
-            DateInput: require('hbs!./templates/date_input'),
-            FileInput: require('hbs!./templates/file_input'),
-            HiddenInput: require('hbs!./templates/hidden_input'),
-            ImageInput: require('hbs!./templates/image_input'),
-            PasswordInput: require('hbs!./templates/password_input'),
-            RadioSelect: require('hbs!./templates/radio_select'),
-            Select: require('hbs!./templates/select'),
-            TextInput: require('hbs!./templates/text_input'),
-            Textarea: require('hbs!./templates/textarea')
+            Button: require('hbs!./templates/fields/button'),
+            CheckBoxInput: require('hbs!./templates/fields/checkbox_input'),
+            DateInput: require('hbs!./templates/fields/date_input'),
+            FileInput: require('hbs!./templates/fields/file_input'),
+            HiddenInput: require('hbs!./templates/fields/hidden_input'),
+            ImageInput: require('hbs!./templates/fields/image_input'),
+            PasswordInput: require('hbs!./templates/fields/password_input'),
+            RadioSelect: require('hbs!./templates/fields/radio_select'),
+            Select: require('hbs!./templates/fields/select'),
+            TextInput: require('hbs!./templates/fields/text_input'),
+            Textarea: require('hbs!./templates/fields/textarea')
         }
     };
 });

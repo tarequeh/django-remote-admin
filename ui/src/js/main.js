@@ -9,14 +9,14 @@ require.config({
 
     paths: {
         // Require Handlebars-plugin
-        'hbs':              'lib/js/require-handlebars-plugin/0.2.1/hbs',
-        'handlebars':       'lib/js/require-handlebars-plugin/0.2.1/Handlebars',
+        'hbs':              '../../lib/js/require-handlebars-plugin/0.2.1/hbs',
+        'Handlebars':       '../../lib/js/require-handlebars-plugin/0.2.1/Handlebars',
 
         // Core
-        'backbone':         'lib/js/backbone/0.9.1/backbone',
-        'jquery':           'lib/js/jquery/1.7.2/jquery',
-        'json2':            'lib/js/json2/2010.03.20/json2',
-        'underscore':       'lib/js/underscore/1.3.1/underscore'
+        'backbone':         '../../lib/js/backbone/0.9.1/backbone',
+        'jquery':           '../../lib/js/jquery/1.7.2/jquery',
+        'json2':            '../../lib/js/json2/2010.03.20/json2',
+        'underscore':       '../../lib/js/underscore/1.3.1/underscore'
     },
 
     pragmasOnSave: {

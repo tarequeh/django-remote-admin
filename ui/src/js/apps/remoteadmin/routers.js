@@ -4,10 +4,9 @@ define(function (require) {
         Backbone = require('backbone'),
         Models = require('./models'),
         Views = require('./views'),
-        Forms = {};
+        Routers = {};
 
-    var routers = {};
-    routers.Charts = Backbone.Router.extend({
+    Routers.RemoteAdmin = Backbone.Router.extend({
         routes: {
             '/': 'load_all_models',
             '/apps/': 'load_all_models',
@@ -20,7 +19,6 @@ define(function (require) {
         initialize: function (options) {
             Backbone.Router.prototype.initialize.call(this, options);
             _.bindAll(this,
-                'index',
                 'load_all_models',
                 'load_models',
                 'load_model_instances',
@@ -49,5 +47,5 @@ define(function (require) {
 
         }
     });
-    return routers;
+    return Routers;
 });
