@@ -7,6 +7,8 @@ from django.utils.text import capfirst
 
 from django_remote_forms.forms import RemoteForm
 
+from adminapi.apps.adminapi.utils import LazyEncoder
+
 
 def handle_login(request):
     if request.method == 'GET':
@@ -84,7 +86,7 @@ def get_models(request, app_label=None):
         'app_list': [app_dict],
     }
 
-    return HttpResponse(json.dumps(response_data), mimetype="application/json")
+    return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
 
 
 def get_model_instances(request, app_label, model_name):
@@ -112,7 +114,7 @@ def get_model_instances(request, app_label, model_name):
                 'delete_url': ''
             })
 
-    return HttpResponse(json.dumps(response_data), mimetype="application/json")
+    return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
 
 
 def handle_instance_form(request, app_label, model_name, instance_id=None):
@@ -162,4 +164,4 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
             # PUT data available, update instance
             pass
 
-    return HttpResponse(json.dumps(response_data), mimetype="application/json")
+    return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
