@@ -1,0 +1,25 @@
+<label class="{{#if field.required}}required {{/if}}{{ field.name }} {{ field.widget.input_type }}" for="{{ field.name }}">
+    <p class="label-text">{{ field.label }}</p>
+
+    <div class="input-container">
+        <select class="input-select{{#if field.required}} required{{/if}}" id="{{field.name}}" name="{{ field.name }}" title="{{ field.title }}">
+            {{#each field.choices}}
+                <option value="{{ this.value }}">{{ this.display }}</option>
+            {{/each}}
+        </select>
+
+        <div class="error-container">
+            {{#if field.errors}}
+                <ul class="error">
+                    {{#each field.errors}}
+                        <li>{{ this }}</li>
+                    {{/each}}
+                </ul>
+            {{/if}}
+        </div>
+    </div>
+
+    {{#if field.help_text}}
+        <p class="help">{{ field.help_text }}</p>
+    {{/if}}
+</label>

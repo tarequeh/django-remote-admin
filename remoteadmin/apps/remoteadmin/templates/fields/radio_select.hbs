@@ -1,0 +1,23 @@
+<div class="input-container{{#if field.required}} required {{/if}}{{ field.name }} {{ field.widget.input_type }}">
+    {{#each field.widget.choices}}
+        <label class="label-inline" for="{{this.name}}|{{this.value}}">
+            <input class="input-radio{{#if field.required}} required{{/if}}" type="radio" id="{{this.name}}|{{this.value}}" name="{{ this.name }}" value="{{ this.value }}" />
+
+            <p class="label-text">{{this.display}}</p>
+        </label>
+    {{/each}}
+
+    <div class="error-container">
+        {{#if field.errors}}
+            <ul class="error">
+                {{#each field.errors}}
+                    <li>{{ this }}</li>
+                {{/each}}
+            </ul>
+        {{/if}}
+    </div>
+</div>
+
+{{#if field.help_text}}
+    <p class="help">{{ field.help_text }}</p>
+{{/if}}
