@@ -25,13 +25,17 @@ def get_models(request, app_label=None):
         has_module_perms = user.has_module_perms(app_label)
 
     app_dict = {}
+
     for model, model_admin in site._registry.items():
         model_name = model._meta.module_name
 
         if app_label is not None and app_label != model._meta.app_label:
             continue
         else:
-            app_label = model._meta.app_label
+            current_app_label = model._meta.app_label
+
+        if current_app_label not in app_dict:
+            app_dict[current_app_label] = {}
 
         if has_module_perms:
             perms = model_admin.get_model_perms(request)
@@ -45,7 +49,7 @@ def get_models(request, app_label=None):
                 }
                 if perms.get('change', False):
                     try:
-                        model_dict['admin_url'] = reverse('adminapi_view_models', args=[app_label])
+                        model_dict['admin_url'] = reverse('adminapi_get_models', args=[app_label])
                     except NoReverseMatch:
                         pass
                 if perms.get('add', False):
@@ -53,25 +57,27 @@ def get_models(request, app_label=None):
                         model_dict['add_url'] = reverse('adminapi_handle_instance_form', args=[app_label, model_name])
                     except NoReverseMatch:
                         pass
-                if app_dict:
-                    app_dict['models'].append(model_dict),
+
+                if app_dict[current_app_label]:
+                    app_dict[current_app_label]['models'].append(model_dict),
                 else:
                     # First time around, now that we know there's
                     # something to display, add in the necessary meta
                     # information.
-                    app_dict = {
-                        'name': app_label.title(),
+                    app_dict[current_app_label] = {
+                        'name': current_app_label.title(),
+                        'title': '%s administration' % capfirst(current_app_label),
                         'app_url': '',
                         'has_module_perms': has_module_perms,
                         'models': [model_dict],
                     }
+        # Sort the models alphabetically within each app.
+        app_dict[current_app_label]['models'].sort(key=lambda x: x['name'])
+
     if not app_dict:
         raise Http404('The requested admin page does not exist.')
 
-    # Sort the models alphabetically within each app.
-    app_dict['models'].sort(key=lambda x: x['name'])
     response_data = {
-        'title': '%s administration' % capfirst(app_label),
         'app_list': [app_dict],
     }
 
