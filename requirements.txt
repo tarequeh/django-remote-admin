@@ -1,1 +1,2 @@
 django==1.4.1
+-e git+git://github.com/WiserTogether/django-remote-forms.git#egg=django_remote_forms
