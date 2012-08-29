@@ -147,6 +147,12 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
                 form = CurrentModelForm()
             else:
                 form = CurrentModelForm(instance=instance)
+
+                # Load initial data
+                for field_name, field in form.fields.items():
+                    if field_name in form.initial:
+                        field.initial = form.initial[field_name]
+
             remote_form = RemoteForm(form)
             response_data['form'] = remote_form.as_dict()
         elif request.method == 'POST':
