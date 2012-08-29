@@ -128,7 +128,6 @@ define(function (require) {
         },
 
         initialize: function (options) {
-            var $throbberContainer = this.$el.closest('.content').first();
             Backbone.View.prototype.initialize.call(this, options);
             _.bindAll(
                 this,
@@ -183,9 +182,6 @@ define(function (require) {
             options = options || {};
             var messages = options.messages || [];
             var field_name, field, map_errors;
-
-            // Destroy the throbber
-            this.throbber.destroy();
 
             $(this.el).html(Templates.Form({form: this.model.attributes, messages: messages}));
             // Render field
