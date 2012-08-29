@@ -1,3 +1,5 @@
+import os
+
 # Django settings for adminapi project.
 
 DEBUG = True
@@ -9,10 +11,20 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Absolute path to the directory that holds the project's python module.
+SITE_ROOT = os.path.realpath(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..')))
+
+# Absolute path to the directory that holds the project python path.
+PROJECT_ROOT = os.path.realpath(os.path.abspath(os.path.join(SITE_ROOT, '..')))
+
+# Absolute path to the directory that holds the project python path.
+DB_ROOT = os.path.realpath(os.path.abspath(os.path.join(PROJECT_ROOT, 'db')))
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',     # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '',                                 # Or path to database file if using sqlite3.
+        'NAME': os.path.join(DB_ROOT, 'main.db'),   # Or path to database file if using sqlite3.
         'USER': '',                                 # Not used with sqlite3.
         'PASSWORD': '',                             # Not used with sqlite3.
         'HOST': '',                                 # Set to empty string for localhost. Not used with sqlite3.
