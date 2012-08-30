@@ -1,9 +1,10 @@
 from django.contrib.admin.sites import site
 from django.core.serializers.json import simplejson as json
-from django.core.urlresolvers import reverse, NoReverseMatch
 from django.forms import ModelForm
 from django.http import Http404, HttpResponse
+from django.middleware.csrf import get_token, CsrfViewMiddleware
 from django.utils.text import capfirst
+from django.views.decorators.csrf import csrf_exempt
 
 from django_remote_forms.forms import RemoteForm
 
@@ -122,7 +123,10 @@ def get_model_instances(request, app_label, model_name):
     return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
 
 
+@csrf_exempt
 def handle_instance_form(request, app_label, model_name, instance_id=None):
+    csrf_middleware = CsrfViewMiddleware()
+
     response_data = {
         'meta': {
             'app_label': app_label,
@@ -154,22 +158,36 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
             # Return initial values if instance ID is supplied, otherwise return empty form
             if instance is None:
                 form = CurrentModelForm()
-                response_data['meta']['data'] = {}
-                for field_name, field in form.fields.items():
-                    if field.initial is not None:
-                        response_data['meta']['data'][field_name] = field.initial
             else:
                 form = CurrentModelForm(instance=instance)
-                # Load initial data
-                response_data['meta']['data'] = form.initial
+                for field_name, initial_value in form.initial.items():
+                    if initial_value is not None and field_name in form.fields:
+                        form.fields[field_name].initial = initial_value
+
+            response_data['csrfmiddlewaretoken'] = get_token(request)
 
             remote_form = RemoteForm(form)
             response_data.update(remote_form.as_dict())
-        elif request.method == 'POST':
-            # Create new instance for given data
-            pass
-        elif hasattr(request, 'raw_post_data'):
-            # PUT data available, update instance
-            pass
 
-    return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
+            response_data['meta']['data'] = {}
+            for field_name, field in response_data['fields'].items():
+                if field['initial'] is not None:
+                    response_data['meta']['data'][field_name] = field['initial']
+
+        elif request.raw_post_data:
+            request.POST = json.loads(request.raw_post_data)
+            csrf_middleware.process_view(request, None, None, None)
+            if 'meta' in request.POST and 'data' in request.POST['meta']:
+                if instance_id is None:
+                    form = CurrentModelForm(request.POST['meta']['data'])
+                else:
+                    form = CurrentModelForm(request.POST['meta']['data'], instance=instance)
+                if form.is_valid():
+                    form.save()
+
+                remote_form = RemoteForm(form)
+                response_data.update(remote_form.as_dict())
+
+    response = HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
+    csrf_middleware.process_response(request, response)
+    return response

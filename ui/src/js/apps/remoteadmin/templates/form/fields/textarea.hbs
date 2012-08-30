@@ -2,7 +2,7 @@
     <p class="label-text">{{ label_text }}</p>
 
     <div class="input-container">
-        <textarea class="input-textarea{{#if field.required}} required{{/if}}" id="{{field.name}}" name="{{ field.name }}" {{# if field.initial}}value={{ field.initial }}{{/if}}></textarea>
+        <textarea class="input-textarea{{#if field.required}} required{{/if}}" id="{{field.name}}" name="{{ field.name }}"></textarea>
 
         <div class="error-container">
             {{#if field.errors}}

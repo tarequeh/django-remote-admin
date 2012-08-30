@@ -284,7 +284,7 @@ define(function (require) {
             }
 
             var field_value = '';
-            if (field.widget.input_type === 'text' || field.widget.input_type === 'password' || field.widget.input_type === 'hidden') {
+            if (_.indexOf(['text', 'password', 'hidden', 'datetime'], field.widget.input_type) >= 0) {
                 field_value = this.$('input[name=' + field_name + ']').val();
             } else if (field.widget.input_type === 'select') {
                 field_value = this.$('select[name=' + field_name + ']').val();
@@ -321,7 +321,7 @@ define(function (require) {
                 return undefined;
             }
 
-            if (field.widget.input_type === 'text' || field.widget.input_type === 'password' || field.widget.input_type === 'hidden') {
+            if (_.indexOf(['text', 'password', 'hidden', 'datetime'], field.widget.input_type) >= 0) {
                 this.$('input[name=' + field_name + ']').val(field_value);
             } else if (field.widget.input_type === 'select') {
                 this.$('select[name=' + field_name + ']').val(field_value);
@@ -366,8 +366,8 @@ define(function (require) {
         },
 
         validate_all: function () {
-            if (this.model.meta.errors) {
-                this.spotcheck_fields = _.keys(this.model.meta.errors);
+            if (this.model.attributes.errors) {
+                this.spotcheck_fields = _.keys(this.model.attributes.errors);
             }
             this.validate();
         },
@@ -379,50 +379,42 @@ define(function (require) {
             var input_tag_types = ['text', 'password', 'radio', 'checkbox'];
             var select_tag_types = ['select', 'date'];
 
-            if (this.model.meta.errors) {
-                var non_field_errors = this.model.meta.errors.__all__ || [];
-                if (non_field_errors.length) {
-                    this.$('.non-field-error-container').html(Templates.Form.Errors({
-                        errors: non_field_errors
-                    }));
-                } else {
-                    this.$('.non-field-error-container').empty();
-                }
+            var non_field_errors = this.model.attributes.non_field_errors || [];
+            if (non_field_errors.length) {
+                this.$('.non-field-error-container').html(Templates.Form.Errors({
+                    errors: non_field_errors
+                }));
+            } else {
+                this.$('.non-field-error-container').empty();
             }
 
             for (field_name in this.model.attributes.fields) {
-                if (true) {
-                    field = this.model.attributes.fields[field_name];
-                    var spotchecked = _.indexOf(this.spotcheck_fields, field_name) >= 0;
+                field = this.model.attributes.fields[field_name];
 
-                    if (spotchecked) {
-                        var field_errors = [];
-                        if (this.model.meta.errors) {
-                            if (this.model.meta.errors[field_name]) {
-                                field_errors = this.model.meta.errors[field_name];
-                            }
-                        }
+                render_errors = _.indexOf(this.spotcheck_fields, field_name) >= 0;
 
-                        field_container = this.$('[for=' + field_name + ']');
-                        if(field_errors.length) {
-                            field_container.find('div.error-container').html(Templates.Form.Errors({errors: field_errors}));
-                        } else {
-                            field_container.find('div.error-container').empty();
-                        }
+                if (render_errors) {
+                    var field_errors = this.model.attributes.errors[field_name] || [];
 
-                        if (_.indexOf(input_tag_types, field.widget.input_type) >= 0) {
-                            input_selector = field_container.find('input');
-                        } else if (_.indexOf(select_tag_types, field.widget.input_type) >= 0) {
-                            input_selector = field_container.find('select');
-                        } else if (field.widget.input_type === 'textarea') {
-                            input_selector = field_container.find('textarea');
-                        }
+                    field_container = this.$('[for=' + field_name + ']');
+                    if(field_errors.length) {
+                        field_container.find('div.error-container').html(Templates.Form.Errors({errors: field_errors}));
+                    } else {
+                        field_container.find('div.error-container').empty();
+                    }
 
-                        if (field_errors.length) {
-                            input_selector.removeClass('valid');
-                        } else {
-                            input_selector.addClass('valid');
-                        }
+                    if (_.indexOf(input_tag_types, field.widget.input_type) >= 0) {
+                        input_selector = field_container.find('input');
+                    } else if (_.indexOf(select_tag_types, field.widget.input_type) >= 0) {
+                        input_selector = field_container.find('select');
+                    } else if (field.widget.input_type === 'textarea') {
+                        input_selector = field_container.find('textarea');
+                    }
+
+                    if (field_errors.length) {
+                        input_selector.removeClass('valid');
+                    } else {
+                        input_selector.addClass('valid');
                     }
                 }
             }

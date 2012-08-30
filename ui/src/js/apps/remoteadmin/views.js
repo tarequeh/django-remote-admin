@@ -54,7 +54,10 @@ define(function (require) {
                 model_name: this.model.attributes.name,
                 instance_id: this.instance_id
             });
-            var instance_form_view = new Forms.View({model: instance_form_model});
+            var instance_form_view = new Forms.View({
+                model: instance_form_model,
+                prefill: true
+            });
             this.$('.model_instance_form').html(instance_form_view.el);
             instance_form_model.fetch();
 
