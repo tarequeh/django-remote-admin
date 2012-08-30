@@ -9,4 +9,6 @@ class LazyEncoder(DjangoJSONEncoder):
         if isinstance(o, Promise):
             return force_unicode(o)
         else:
+            if callable(o):
+                o = o()
             return super(LazyEncoder, self).default(o)

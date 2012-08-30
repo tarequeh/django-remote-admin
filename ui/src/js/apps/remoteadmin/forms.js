@@ -10,14 +10,11 @@ define(function (require) {
         initialize: function (options) {
             Backbone.Model.prototype.initialize.call(this, options);
 
-            _.bindAll(this, 'transform', 'map_errors');
+            _.bindAll(this, 'transform', 'is_successfully_synced');
 
             options = options || {};
             this.name = options.name;
             this.title = options.title;
-            this.parent = options.parent;
-            this.action = options.action || options.parent;
-            this.base_url = this.parent.base_url + 'form/';
             this.allow_buttons = options.allow_buttons;
 
             if (this.allow_buttons !== false) {
@@ -28,6 +25,10 @@ define(function (require) {
             this.bind('fetched', this.transform);
         },
 
+        url: function () {
+            return '';
+        },
+
         fetch: function (options) {
             options = options || {};
             options.success = function (model, resp) {
@@ -35,19 +36,6 @@ define(function (require) {
             };
 
             Backbone.Model.prototype.fetch.call(this, options);
-        },
-
-        url: function () {
-            // NOTE: Make sure that all URLs (before query string ends with backslash)
-            if (!this.parent) {
-                return '';
-            }
-
-            var url = this.base_url;
-            if (this.name) {
-                url += this.name + '/';
-            }
-            return url;
         },
 
         transform: function () {
@@ -90,6 +78,10 @@ define(function (require) {
                 }
             }
 
+            if (this.attributes.meta) {
+                this.meta = this.attributes.meta;
+            }
+
             if (this.allow_buttons && this.buttons.length === 0) {
                 this.attributes.buttons = [];
                 this.attributes.buttons.push({
@@ -103,13 +95,21 @@ define(function (require) {
             this.is_synced = true;
         },
 
-        map_errors: function () {
-            if (this.action.errors && this.action.errors.form) {
-                this.attributes.errors = this.action.errors.form['__all__'] || [];
+        save: function (options) {
+            this.attributes.meta = this.meta || {};
+            // For backbone save, seconds parameter is considered options if first parameter is null
+            Backbone.Model.prototype.save.call(this, null, options);
+        },
 
-                for (var field_name in this.attributes.fields) {
-                    this.attributes.fields[field_name].errors = this.action.errors.form[field_name] || [];
+        is_successfully_synced: function () {
+            if (this.is_synced) {
+                if (this.meta && this.meta.errors) {
+                    return false;
+                } else {
+                    return true;
                 }
+            } else {
+                return false;
             }
         }
     });
@@ -171,11 +171,11 @@ define(function (require) {
             // Use this option to disable spotcheck entirely or within code scope
             this.force_disable_spotcheck = false;
 
-            if (!this.model.action.attributes.meta) {
-                this.model.action.attributes.meta = {};
+            if (!this.model.meta) {
+                this.model.meta = {};
             }
 
-            this.model.track('ready', this.render);
+            this.model.bind('ready', this.render);
         },
 
         render: function (options) {
@@ -183,7 +183,7 @@ define(function (require) {
             var messages = options.messages || [];
             var field_name, field, map_errors;
 
-            $(this.el).html(Templates.Form.Form({form: this.model.attributes, messages: messages}));
+            $(this.el).html(Templates.Form.Base({form: this.model.attributes, messages: messages}));
             // Render field
             this.$('.fieldsets').empty();
 
@@ -240,7 +240,7 @@ define(function (require) {
                     this.spotcheck_fields = _.union(this.spotcheck_fields, field_name);
 
                     this.load_values();
-                    this.model.action.attributes.meta.validate = true;
+                    this.model.meta.validate = true;
                     form = this;
                     form.model.action.save({success: function (model, resp) {
                         form.validate();
@@ -267,9 +267,9 @@ define(function (require) {
                         this.spotcheck_fields = _.union(this.spotcheck_fields, field_name);
 
                         this.load_values();
-                        this.model.action.attributes.meta.validate = true;
+                        this.model.meta.validate = true;
                         form = this;
-                        form.model.action.save({success: function (model, resp) {
+                        this.model.save({success: function (model, resp) {
                             form.validate();
                         }});
                     }
@@ -309,7 +309,7 @@ define(function (require) {
                     var field_value = this.get_field_value(field_name);
 
                     if (field_value !== undefined) {
-                        this.model.action.attributes[field_name] = field_value;
+                        this.model.meta.data[field_name] = field_value;
                     }
                 }
             }
@@ -345,9 +345,9 @@ define(function (require) {
         restore_values: function () {
             this.force_disable_spotcheck = true;
             var field_name, saved_value;
-            for (field_name in this.model.action.attributes) {
+            for (field_name in this.model.meta.data) {
                 if (true) {
-                    saved_value = this.model.action.attributes[field_name];
+                    saved_value = this.model.meta.data[field_name];
 
                     if (!saved_value) {
                         continue;
@@ -359,15 +359,15 @@ define(function (require) {
         },
 
         validate: function () {
-            this.is_valid = this.model.action.is_successfully_synced();
+            this.is_valid = this.model.is_successfully_synced();
             if (!this.valid) {
                 this.render_errors();
             }
         },
 
         validate_all: function () {
-            if (this.model.action.errors.form) {
-                this.spotcheck_fields = _.keys(this.model.action.errors.form);
+            if (this.model.meta.errors) {
+                this.spotcheck_fields = _.keys(this.model.meta.errors);
             }
             this.validate();
         },
@@ -379,8 +379,8 @@ define(function (require) {
             var input_tag_types = ['text', 'password', 'radio', 'checkbox'];
             var select_tag_types = ['select', 'date'];
 
-            if (this.model.action.errors && this.model.action.errors.form) {
-                var non_field_errors = this.model.action.errors.form.__all__ || [];
+            if (this.model.meta.errors) {
+                var non_field_errors = this.model.meta.errors.__all__ || [];
                 if (non_field_errors.length) {
                     this.$('.non-field-error-container').html(Templates.Form.Errors({
                         errors: non_field_errors
@@ -397,11 +397,9 @@ define(function (require) {
 
                     if (spotchecked) {
                         var field_errors = [];
-                        if (this.model.action.errors) {
-                            if (this.model.action.errors.form) {
-                                if (this.model.action.errors.form[field_name]) {
-                                    field_errors = this.model.action.errors.form[field_name];
-                                }
+                        if (this.model.meta.errors) {
+                            if (this.model.meta.errors[field_name]) {
+                                field_errors = this.model.meta.errors[field_name];
                             }
                         }
 
@@ -434,10 +432,10 @@ define(function (require) {
             this.$el.fadeTo('fast', 0.5);
 
             this.load_values();
-            var form = this;
-            this.model.action.attributes.meta.validate = false;
+            this.model.meta.validate = false;
 
-            form.model.action.save({success: function (model, resp) {
+            var form = this;
+            this.model.save({success: function (model, resp) {
                 // Validate all fields on submission
                 form.validate_all();
                 if (form.is_valid) {
@@ -487,6 +485,28 @@ define(function (require) {
             } else {
                 this.$el.fadeTo('fast', 1.0);
             }
+        }
+    });
+
+    Forms.DjangoModelInstance = Forms.Model.extend({
+        initialize: function (options) {
+            Forms.Model.prototype.initialize.call(this, options);
+
+            options = options ? _.clone(options) : {};
+
+            this.app_label = options.app_label;
+            this.model_name = options.model_name;
+            this.instance_id = options.instance_id;
+        },
+
+        url: function () {
+            var url = '/adminapi/apps/' + this.app_label + '/models/' + this.model_name + '/instances';
+            if (this.instance_id) {
+                url += '/' + this.instance_id;
+            }
+
+            url += '/form/';
+            return url;
         }
     });
 

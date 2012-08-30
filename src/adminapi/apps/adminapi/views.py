@@ -60,16 +60,6 @@ def get_models(request, app_label=None):
                     'title': unicode(capfirst(model._meta.verbose_name_plural)),
                     'perms': perms,
                 }
-                if perms.get('change', False):
-                    try:
-                        model_dict['admin_url'] = reverse('adminapi_get_model_instances', args=[current_app_label, model_name])
-                    except NoReverseMatch:
-                        pass
-                if perms.get('add', False):
-                    try:
-                        model_dict['add_url'] = reverse('adminapi_handle_instance_add_form', args=[current_app_label, model_name])
-                    except NoReverseMatch:
-                        pass
 
                 if current_app_dict:
                     current_app_dict['models'].append(model_dict),
@@ -81,8 +71,7 @@ def get_models(request, app_label=None):
                         'label': current_app_label,
                         'title': capfirst(current_app_label),
                         'has_module_perms': has_module_perms,
-                        'models': [model_dict],
-                        'admin_url': reverse('adminapi_get_models', args=[current_app_label])
+                        'models': [model_dict]
                     }
         # Sort the models alphabetically within each app.
         current_app_dict['models'].sort(key=lambda x: x['name'])
@@ -102,26 +91,32 @@ def get_models(request, app_label=None):
 def get_model_instances(request, app_label, model_name):
     # Return list of instances for a given model
     response_data = {
-        'app_label': app_label,
-        'model_name': model_name,
+        'name': model_name,
         'instances': []
     }
 
     for model, model_admin in site._registry.items():
+        current_app_label = ''
         if app_label != model._meta.app_label or model_name != model._meta.module_name:
             continue
+        else:
+            current_app_label = model._meta.app_label
+
+        if 'app' not in response_data:
+            response_data['app'] = {
+                'label': current_app_label,
+                'title': capfirst(current_app_label)
+            }
+
+        if 'title' not in response_data:
+            response_data['title'] = unicode(capfirst(model._meta.verbose_name_plural))
 
         for model_instance in model.objects.all():
             response_data['instances'].append({
                 'id': model_instance.pk,
-                'title': unicode(model_instance),
-                'add_url': reverse('adminapi_handle_instance_add_form', args=[app_label, model_name]),
-                'edit_url': reverse('adminapi_handle_instance_edit_form', kwargs={
-                    'app_label': app_label,
-                    'model_name': model_name,
-                    'instance_id': model_instance.pk
-                }),
-                'delete_url': ''
+                'name': model_name,
+                'app_label': app_label,
+                'title': unicode(model_instance)
             })
 
     return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
@@ -129,8 +124,10 @@ def get_model_instances(request, app_label, model_name):
 
 def handle_instance_form(request, app_label, model_name, instance_id=None):
     response_data = {
-        'app_label': app_label,
-        'model_name': model_name
+        'meta': {
+            'app_label': app_label,
+            'model_name': model_name
+        }
     }
 
     instance = None
@@ -157,16 +154,17 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
             # Return initial values if instance ID is supplied, otherwise return empty form
             if instance is None:
                 form = CurrentModelForm()
+                response_data['meta']['data'] = {}
+                for field_name, field in form.fields.items():
+                    if field.initial is not None:
+                        response_data['meta']['data'][field_name] = field.initial
             else:
                 form = CurrentModelForm(instance=instance)
-
                 # Load initial data
-                for field_name, field in form.fields.items():
-                    if field_name in form.initial:
-                        field.initial = form.initial[field_name]
+                response_data['meta']['data'] = form.initial
 
             remote_form = RemoteForm(form)
-            response_data['form'] = remote_form.as_dict()
+            response_data.update(remote_form.as_dict())
         elif request.method == 'POST':
             # Create new instance for given data
             pass

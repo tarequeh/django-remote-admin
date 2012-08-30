@@ -1,0 +1,11 @@
+<h3><a href="#/apps/{{ model_data.app.label }}/">{{ model_data.app.title }}</a> - {{ model_data.title}}</h3>
+<a href="#/apps/{{ model_data.app.label }}/models/{{ model_data.name }}/instances/add/" class="add_model">Add {{ this.title }}</a>
+<div class="model_instances">
+    <ul>
+        {{#each model_data.instances}}
+            <li>
+                <a href="#/apps/{{ this.app_label }}/models/{{ this.name }}/instances/{{ this.id }}/edit/">{{ this.title }}</a>
+            </li>
+        {{/each}}
+    </ul>
+</div>
