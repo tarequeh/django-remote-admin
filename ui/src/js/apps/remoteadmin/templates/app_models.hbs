@@ -1,0 +1,14 @@
+<h3><a href="#">Admin Home</a></h3>
+{{#each app_list}}
+    <h4><a href="#/apps/{{ this.label }}/">{{ this.title }}</a></h4>
+    <div class="app_models">
+        <a href="#" class="add_model">Add {{ this.title }}</a>
+        <ul>
+            {{#each this.models}}
+                <li>
+                    <a href="#/apps/{{ this.app_label }}/models/{{ this.name }}/instances/">{{ this.title }}
+                </li>
+            {{/each}}
+        </ul>
+    </div>
+{{/each}}

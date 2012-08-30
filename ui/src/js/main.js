@@ -48,12 +48,12 @@ require(
         'backbone',
         'apps/remoteadmin/application'
     ],
-    function (require, Backbone, remoteadmin) {
+    function (require, Backbone, remote_admin_app) {
         // Apply backbone settings here in a central location
         Backbone.emulateHTTP = true;
         Backbone.emulateJSON = true;
 
-        remoteadmin.init();
+        remote_admin_app.init();
 
         // Start backbone history once, here in a central location
         Backbone.history.start();

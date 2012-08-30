@@ -12,6 +12,6 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 )
 
-urlpatterns = patterns('django.views.generic.simple',
+urlpatterns += patterns('django.views.generic.simple',
     (r'^$', 'direct_to_template', {'template': 'index.html'}),
 )

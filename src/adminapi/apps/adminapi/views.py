@@ -23,13 +23,14 @@ def get_models(request, app_label=None):
     # Return data on all models registered with admin
     user = request.user
 
+    has_module_perms = False
     if app_label is None:
         if user.is_staff or user.is_superuser:
             has_module_perms = True
     else:
         has_module_perms = user.has_module_perms(app_label)
 
-    app_dict = {}
+    app_list = []
 
     for model, model_admin in site._registry.items():
         model_name = model._meta.module_name
@@ -39,8 +40,13 @@ def get_models(request, app_label=None):
         else:
             current_app_label = model._meta.app_label
 
-        if current_app_label not in app_dict:
-            app_dict[current_app_label] = {}
+        is_new_app = True
+        current_app_dict = {}
+        for app_dict in app_list:
+            if app_dict['label'] == current_app_label:
+                current_app_dict = app_dict
+                is_new_app = False
+                break
 
         if has_module_perms:
             perms = model_admin.get_model_perms(request)
@@ -49,41 +55,45 @@ def get_models(request, app_label=None):
             # If so, add the module to the model_list.
             if True in perms.values():
                 model_dict = {
+                    'app_label': current_app_label,
                     'name': model_name,
                     'title': unicode(capfirst(model._meta.verbose_name_plural)),
                     'perms': perms,
                 }
                 if perms.get('change', False):
                     try:
-                        model_dict['admin_url'] = reverse('adminapi_get_models', args=[app_label])
+                        model_dict['admin_url'] = reverse('adminapi_get_model_instances', args=[current_app_label, model_name])
                     except NoReverseMatch:
                         pass
                 if perms.get('add', False):
                     try:
-                        model_dict['add_url'] = reverse('adminapi_handle_instance_form', args=[app_label, model_name])
+                        model_dict['add_url'] = reverse('adminapi_handle_instance_add_form', args=[current_app_label, model_name])
                     except NoReverseMatch:
                         pass
 
-                if app_dict[current_app_label]:
-                    app_dict[current_app_label]['models'].append(model_dict),
+                if current_app_dict:
+                    current_app_dict['models'].append(model_dict),
                 else:
                     # First time around, now that we know there's
                     # something to display, add in the necessary meta
                     # information.
-                    app_dict[current_app_label] = {
-                        'name': current_app_label.title(),
-                        'title': '%s administration' % capfirst(current_app_label),
+                    current_app_dict = {
+                        'label': current_app_label,
+                        'title': capfirst(current_app_label),
                         'has_module_perms': has_module_perms,
                         'models': [model_dict],
+                        'admin_url': reverse('adminapi_get_models', args=[current_app_label])
                     }
         # Sort the models alphabetically within each app.
-        app_dict[current_app_label]['models'].sort(key=lambda x: x['name'])
+        current_app_dict['models'].sort(key=lambda x: x['name'])
+        if is_new_app:
+            app_list.append(current_app_dict)
 
-    if not app_dict:
+    if not app_list:
         raise Http404('The requested admin page does not exist')
 
     response_data = {
-        'app_list': [app_dict],
+        'app_list': app_list
     }
 
     return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")

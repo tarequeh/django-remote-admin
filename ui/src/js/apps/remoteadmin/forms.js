@@ -84,7 +84,7 @@ define(function (require) {
 
                 // Set field renderer
                 if (field.widget) {
-                    field.renderer = Templates.Fields[field.widget.title];
+                    field.renderer = Templates.Form.Fields[field.widget.title];
                 } else {
                     field.renderer = null;
                 }
@@ -183,7 +183,7 @@ define(function (require) {
             var messages = options.messages || [];
             var field_name, field, map_errors;
 
-            $(this.el).html(Templates.Form({form: this.model.attributes, messages: messages}));
+            $(this.el).html(Templates.Form.Form({form: this.model.attributes, messages: messages}));
             // Render field
             this.$('.fieldsets').empty();
 
@@ -382,7 +382,7 @@ define(function (require) {
             if (this.model.action.errors && this.model.action.errors.form) {
                 var non_field_errors = this.model.action.errors.form.__all__ || [];
                 if (non_field_errors.length) {
-                    this.$('.non-field-error-container').html(Templates.Errors({
+                    this.$('.non-field-error-container').html(Templates.Form.Errors({
                         errors: non_field_errors
                     }));
                 } else {
@@ -407,7 +407,7 @@ define(function (require) {
 
                         field_container = this.$('[for=' + field_name + ']');
                         if(field_errors.length) {
-                            field_container.find('div.error-container').html(Templates.Errors({errors: field_errors}));
+                            field_container.find('div.error-container').html(Templates.Form.Errors({errors: field_errors}));
                         } else {
                             field_container.find('div.error-container').empty();
                         }
