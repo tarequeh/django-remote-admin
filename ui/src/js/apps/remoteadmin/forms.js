@@ -211,14 +211,20 @@ define(function (require) {
 
             this.delegateEvents();
 
+            var readonly_fields = [];
+
             if (!this.editable) {
-                var editables = this.$('input, select, textarea').not('input[type=button]');
-                editables.off();
-                editables.on('click focus mousedown mouseenter', function (event) {
+                // All fields are readonly
+                readonly_fields = this.$('input, select, textarea').not('input[type=button]');
+            }
+
+            if (readonly_fields.length) {
+                readonly_fields.off();
+                readonly_fields.on('click focus mousedown mouseenter', function (event) {
                     event.preventDefault();
                     return false;
                 });
-                editables.fadeTo('fast', 0.8);
+                readonly_fields.fadeTo('fast', 0.8);
             }
 
             return this;

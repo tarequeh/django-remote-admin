@@ -93,7 +93,9 @@ def get_model_instances(request, app_label, model_name):
     # Return list of instances for a given model
     response_data = {
         'name': model_name,
-        'instances': []
+        'header': [],
+        'instances': [],
+        'admin': {}
     }
 
     for model, model_admin in site._registry.items():
@@ -102,6 +104,12 @@ def get_model_instances(request, app_label, model_name):
             continue
         else:
             current_app_label = model._meta.app_label
+
+        response_data['admin'].update({
+            'list_display': model_admin.list_display,
+            'list_editable': model_admin.list_editable,
+            'ordering': model_admin.ordering
+        })
 
         if 'app' not in response_data:
             response_data['app'] = {
@@ -112,13 +120,50 @@ def get_model_instances(request, app_label, model_name):
         if 'title' not in response_data:
             response_data['title'] = unicode(capfirst(model._meta.verbose_name_plural))
 
+        is_header_generated = False
+
         for model_instance in model.objects.all():
-            response_data['instances'].append({
+            instance_data = {
                 'id': model_instance.pk,
                 'name': model_name,
                 'app_label': app_label,
-                'title': unicode(model_instance)
-            })
+                'list_data': {
+                    'lead': None,
+                    'rest': []
+                }
+            }
+
+            if response_data['admin']['list_display']:
+                for instance_property_name in response_data['admin']['list_display']:
+                    instance_property_value = getattr(model_instance, instance_property_name, '')
+                    if callable(instance_property_value):
+                        instance_property_value = instance_property_value()
+
+                    instance_property_value = unicode(instance_property_value)
+
+                    if not is_header_generated:
+                        normalized_instance_property_name = instance_property_name
+                        if '__' in instance_property_name:
+                            normalized_instance_property_name = ' '.join(instance_property_name.split('__')[1:])
+
+                        normalized_instance_property_name = capfirst(normalized_instance_property_name)
+                        response_data['header'].append(normalized_instance_property_name)
+
+                    instance_data['list_data']['rest'].append(instance_property_value)
+            else:
+                instance_data['list_data']['rest'] = (model_instance.pk, unicode(model_instance),)
+
+                if not is_header_generated:
+                    response_data['header'] = ('ID', 'Title',)
+
+            if not is_header_generated:
+                is_header_generated = True
+
+            # Split the list of values
+            instance_data['list_data']['lead'] = instance_data['list_data']['rest'][0]
+            instance_data['list_data']['rest'] = instance_data['list_data']['rest'][1:]
+
+            response_data['instances'].append(instance_data)
 
     return HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
 
@@ -131,7 +176,9 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
         'meta': {
             'app_label': app_label,
             'model_name': model_name
-        }
+        },
+
+        'admin': {}
     }
 
     instance = None
@@ -139,6 +186,14 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
     for model, model_admin in site._registry.items():
         if app_label != model._meta.app_label or model_name != model._meta.module_name:
             continue
+
+        field_configuration = {
+            'include': model_admin.fields or [],
+            'exclude': model_admin.exclude or [],
+            'ordering': model_admin.fields or [],
+            'fieldsets': model_admin.fieldsets or {},
+            'readonly': model_admin.readonly_fields or []
+        }
 
         if instance_id is not None:
             response_data[instance_id] = instance_id
@@ -166,9 +221,10 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
 
             response_data['csrfmiddlewaretoken'] = get_token(request)
 
-            remote_form = RemoteForm(form)
+            remote_form = RemoteForm(form, **field_configuration)
             response_data.update(remote_form.as_dict())
 
+            # TODO: Move to remote form
             response_data['meta']['data'] = {}
             for field_name, field in response_data['fields'].items():
                 if field['initial'] is not None:
@@ -185,7 +241,7 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
                 if form.is_valid():
                     form.save()
 
-                remote_form = RemoteForm(form)
+                remote_form = RemoteForm(form, **field_configuration)
                 response_data.update(remote_form.as_dict())
 
     response = HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
