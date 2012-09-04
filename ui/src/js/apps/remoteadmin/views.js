@@ -52,8 +52,15 @@ define(function (require) {
             var instance_form_model = new Forms.DjangoModelInstance({
                 app_label: this.model.attributes.app.label,
                 model_name: this.model.attributes.name,
-                instance_id: this.instance_id
+                instance_id: this.instance_id,
+                buttons: [{
+                    'class': 'submit',
+                    'name': 'submit',
+                    'display_text': 'Save',
+                    'message': 'Successfully updated ' + this.model.attributes.name
+                }]
             });
+
             var instance_form_view = new Forms.View({
                 model: instance_form_model,
                 prefill: true

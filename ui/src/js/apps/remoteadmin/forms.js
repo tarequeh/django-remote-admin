@@ -78,10 +78,6 @@ define(function (require) {
                 }
             }
 
-            if (this.attributes.meta) {
-                this.meta = this.attributes.meta;
-            }
-
             if (this.allow_buttons && this.buttons.length === 0) {
                 this.attributes.buttons = [];
                 this.attributes.buttons.push({
@@ -91,19 +87,39 @@ define(function (require) {
                 });
             }
 
+            if (!this.attributes.meta) {
+                this.attributes.meta = {};
+            }
+
+            if (!this.attributes.data) {
+                this.attributes.data = {};
+            }
+
+            if (!this.attributes.errors) {
+                this.attributes.errors = {};
+            }
+
             this.trigger('ready');
             this.is_synced = true;
         },
 
         save: function (options) {
-            this.attributes.meta = this.meta || {};
+            options = options ? _.clone(options) : {};
+            var success = options.success;
+            options.success = function(model, resp) {
+                // Transform model again on save
+                model.transform();
+                if (success) {
+                    success(model, resp);
+                }
+            };
             // For backbone save, seconds parameter is considered options if first parameter is null
             Backbone.Model.prototype.save.call(this, null, options);
         },
 
         is_successfully_synced: function () {
             if (this.is_synced) {
-                if (this.meta && this.meta.errors) {
+                if (_.keys(this.attributes.errors).length > 0) {
                     return false;
                 } else {
                     return true;
@@ -184,7 +200,7 @@ define(function (require) {
             var field_name, field, map_errors;
             var readonly_fields = [];
 
-            $(this.el).html(Templates.Form.Base({form: this.model.attributes, messages: messages}));
+            $(this.el).html(Templates.Form.Base({form: this.model.attributes}));
             // Render field
             this.$('.fieldsets').empty();
 
@@ -200,6 +216,11 @@ define(function (require) {
                 } else if (field.readonly) {
                     readonly_fields.push(field_name);
                 }
+            }
+
+            // Load messages
+            if (messages.length) {
+                this.$('.messages-container').html(Templates.Form.Messages({messages: messages}));
             }
 
             // Unescape labels
@@ -259,7 +280,7 @@ define(function (require) {
                     this.spotcheck_fields = _.union(this.spotcheck_fields, field_name);
 
                     this.load_values();
-                    this.model.meta.validate = true;
+                    this.model.attributes.meta.validate = true;
                     form = this;
                     form.model.action.save({success: function (model, resp) {
                         form.validate();
@@ -286,7 +307,7 @@ define(function (require) {
                         this.spotcheck_fields = _.union(this.spotcheck_fields, field_name);
 
                         this.load_values();
-                        this.model.meta.validate = true;
+                        this.model.attributes.meta.validate = true;
                         form = this;
                         this.model.save({success: function (model, resp) {
                             form.validate();
@@ -328,7 +349,7 @@ define(function (require) {
                     var field_value = this.get_field_value(field_name);
 
                     if (field_value !== undefined) {
-                        this.model.meta.data[field_name] = field_value;
+                        this.model.attributes.data[field_name] = field_value;
                     }
                 }
             }
@@ -364,9 +385,9 @@ define(function (require) {
         restore_values: function () {
             this.force_disable_spotcheck = true;
             var field_name, saved_value;
-            for (field_name in this.model.meta.data) {
+            for (field_name in this.model.attributes.data) {
                 if (true) {
-                    saved_value = this.model.meta.data[field_name];
+                    saved_value = this.model.attributes.data[field_name];
 
                     if (!saved_value) {
                         continue;
@@ -385,7 +406,7 @@ define(function (require) {
         },
 
         validate_all: function () {
-            if (this.model.attributes.errors) {
+            if (_.keys(this.model.attributes.errors).length > 0) {
                 this.spotcheck_fields = _.keys(this.model.attributes.errors);
             }
             this.validate();
@@ -443,7 +464,7 @@ define(function (require) {
             this.$el.fadeTo('fast', 0.5);
 
             this.load_values();
-            this.model.meta.validate = false;
+            this.model.attributes.meta.validate = false;
 
             var form = this;
             this.model.save({success: function (model, resp) {
@@ -483,8 +504,9 @@ define(function (require) {
             if (submit_buttons.length) {
                 var submit_button = submit_buttons[0];
                 if (submit_button.message) {
-                    this.render({messages: [submit_button.message]});
-                    this.restore_values();
+                    this.$('.messages-container').html(Templates.Form.Messages({
+                        messages: [submit_button.message]
+                    }));
                 }
             }
 

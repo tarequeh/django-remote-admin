@@ -7,6 +7,7 @@ define(function (require){
         Form: {
             Errors: require('hbs!./templates/form/errors'),
             Base: require('hbs!./templates/form/base'),
+            Messages: require('hbs!./templates/form/messages'),
 
             // Fields
             Fields: {

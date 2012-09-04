@@ -1,11 +1,5 @@
 <form class="{{form.name}}">
-    {{#if messages}}
-        <ul class="info">
-            {{#each messages}}
-                <li>{{ this }}</li>
-            {{/each}}
-        </ul>
-    {{/if}}
+    <div class="messages-container"></div>
 
     {{# if form.title}}<h4>{{form.title}}</h4>{{/if}}
 

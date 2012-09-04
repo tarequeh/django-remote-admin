@@ -223,21 +223,14 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
 
             remote_form = RemoteForm(form, **field_configuration)
             response_data.update(remote_form.as_dict())
-
-            # TODO: Move to remote form
-            response_data['meta']['data'] = {}
-            for field_name, field in response_data['fields'].items():
-                if field['initial'] is not None:
-                    response_data['meta']['data'][field_name] = field['initial']
-
         elif request.raw_post_data:
             request.POST = json.loads(request.raw_post_data)
             csrf_middleware.process_view(request, None, None, None)
-            if 'meta' in request.POST and 'data' in request.POST['meta']:
+            if 'data' in request.POST:
                 if instance_id is None:
-                    form = CurrentModelForm(request.POST['meta']['data'])
+                    form = CurrentModelForm(request.POST['data'])
                 else:
-                    form = CurrentModelForm(request.POST['meta']['data'], instance=instance)
+                    form = CurrentModelForm(request.POST['data'], instance=instance)
                 if form.is_valid():
                     form.save()
 
