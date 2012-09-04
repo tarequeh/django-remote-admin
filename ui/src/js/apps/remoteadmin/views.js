@@ -7,6 +7,25 @@ define(function (require) {
         Templates = require('./templates'),
         Views = {};
 
+    Views.Login = Backbone.View.extend({
+        render: function () {
+            this.$el.html(Templates.Login());
+
+            var login_form_model = new Forms.Login();
+
+            var login_form_view = new Forms.View({
+                model: login_form_model,
+                spotcheck: true,
+                redirect_url: '/'
+            });
+            this.$('.login_form').html(login_form_view.el);
+            login_form_model.fetch();
+
+            this.delegateEvents();
+            return this;
+        }
+    });
+
     Views.DjangoApps = Backbone.View.extend({
         initialize: function (options) {
             Backbone.View.prototype.initialize.call(this, options);

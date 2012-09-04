@@ -10,6 +10,7 @@ define(function (require) {
         routes: {
             '': 'load_models',
             '/': 'load_models',
+            '/login/': 'login',
             '/apps/': 'load_models',
             '/apps/:app_label/': 'load_models',
             '/apps/:app_label/models/:model_name/instances/': 'load_model_instances',
@@ -20,10 +21,17 @@ define(function (require) {
         initialize: function (options) {
             Backbone.Router.prototype.initialize.call(this, options);
             _.bindAll(this,
+                'login',
                 'load_models',
                 'load_model_instances',
                 'load_model_form'
             );
+        },
+
+        login: function () {
+            var login_view = new Views.Login();
+            $('#content').html(login_view.el);
+            login_view.render();
         },
 
         load_models: function (app_label) {

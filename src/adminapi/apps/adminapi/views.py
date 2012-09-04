@@ -1,4 +1,6 @@
 from django.contrib.admin.sites import site
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.forms import AuthenticationForm
 from django.core.serializers.json import simplejson as json
 from django.forms import ModelForm
 from django.http import Http404, HttpResponse
@@ -11,25 +13,46 @@ from django_remote_forms.forms import RemoteForm
 from adminapi.apps.adminapi.utils import LazyEncoder
 
 
+@csrf_exempt
 def handle_login(request):
-    if request.method == 'GET':
-        # Return login form
-        pass
-    elif request.method == 'POST':
-        # Process login
-        pass
+    csrf_middleware = CsrfViewMiddleware()
+
+    response_data = {}
+    form = None
+
+    if request.raw_post_data:
+        request.POST = json.loads(request.raw_post_data)
+        csrf_middleware.process_view(request, None, None, None)
+        if 'data' in request.POST:
+            form = AuthenticationForm(data=request.POST['data'])
+            if form.is_valid():
+                if not request.POST['meta']['validate']:
+                    auth_login(request, form.get_user())
+    else:
+        form = AuthenticationForm(request)
+        response_data['csrfmiddlewaretoken'] = get_token(request)
+
+    if form is not None:
+        remote_form = RemoteForm(form)
+        response_data.update(remote_form.as_dict())
+
+    response = HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
+    csrf_middleware.process_response(request, response)
+    return response
 
 
 def get_models(request, app_label=None):
     # Return data on all models registered with admin
-    user = request.user
+
+    if not request.user.is_authenticated():
+        return HttpResponse('Unauthorized request', status=401)
 
     has_module_perms = False
     if app_label is None:
-        if user.is_staff or user.is_superuser:
+        if request.user.is_staff or request.user.is_superuser:
             has_module_perms = True
     else:
-        has_module_perms = user.has_module_perms(app_label)
+        has_module_perms = request.user.has_module_perms(app_label)
 
     app_list = []
 
@@ -90,6 +113,9 @@ def get_models(request, app_label=None):
 
 
 def get_model_instances(request, app_label, model_name):
+    if not request.user.is_authenticated():
+        return HttpResponse('Unauthorized', status=401)
+
     # Return list of instances for a given model
     response_data = {
         'name': model_name,
@@ -170,6 +196,9 @@ def get_model_instances(request, app_label, model_name):
 
 @csrf_exempt
 def handle_instance_form(request, app_label, model_name, instance_id=None):
+    if not request.user.is_authenticated():
+        return HttpResponse('Unauthorized', status=401)
+
     csrf_middleware = CsrfViewMiddleware()
 
     response_data = {
@@ -232,7 +261,8 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
                 else:
                     form = CurrentModelForm(request.POST['data'], instance=instance)
                 if form.is_valid():
-                    form.save()
+                    if not request.POST['meta']['validate']:
+                        form.save()
 
                 remote_form = RemoteForm(form, **field_configuration)
                 response_data.update(remote_form.as_dict())

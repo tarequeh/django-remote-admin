@@ -1,5 +1,6 @@
 define(function (require){
     return {
+        Login: require('hbs!./templates/login'),
         AppModels: require('hbs!./templates/app_models'),
         ModelInstance: require('hbs!./templates/model_instance'),
         ModelInstances: require('hbs!./templates/model_instances'),

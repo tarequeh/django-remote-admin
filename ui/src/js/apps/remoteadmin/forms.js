@@ -38,7 +38,13 @@ define(function (require) {
             Backbone.Model.prototype.fetch.call(this, options);
         },
 
-        transform: function () {
+        transform: function (options) {
+            options = options || {};
+
+            if (options.trigger !== true && options.trigger !== false) {
+                options.trigger = true;
+            }
+
             this.attributes.title = this.title || '';
             var fields = this.attributes.fields;
             for (var field_name in fields) {
@@ -99,7 +105,10 @@ define(function (require) {
                 this.attributes.errors = {};
             }
 
-            this.trigger('ready');
+            if (options.trigger) {
+                this.trigger('ready');
+            }
+
             this.is_synced = true;
         },
 
@@ -107,8 +116,8 @@ define(function (require) {
             options = options ? _.clone(options) : {};
             var success = options.success;
             options.success = function(model, resp) {
-                // Transform model again on save
-                model.transform();
+                // Transform model again on save but don't re-render
+                model.transform({trigger: false});
                 if (success) {
                     success(model, resp);
                 }
@@ -282,8 +291,11 @@ define(function (require) {
                     this.load_values();
                     this.model.attributes.meta.validate = true;
                     form = this;
-                    form.model.action.save({success: function (model, resp) {
+                    this.model.save({success: function (model, resp) {
                         form.validate();
+                        if (!form.prefill) {
+                            form.restore_values();
+                        }
                     }});
                 }
             } else if (event.type === 'change') {
@@ -311,6 +323,9 @@ define(function (require) {
                         form = this;
                         this.model.save({success: function (model, resp) {
                             form.validate();
+                            if (!form.prefill) {
+                                form.restore_values();
+                            }
                         }});
                     }
                 }
@@ -407,7 +422,10 @@ define(function (require) {
 
         validate_all: function () {
             if (_.keys(this.model.attributes.errors).length > 0) {
-                this.spotcheck_fields = _.keys(this.model.attributes.errors);
+                this.spotcheck_fields = _.union(
+                    _.keys(this.model.attributes.errors),
+                    _.keys(this.model.attributes.fields)
+                );
             }
             this.validate();
         },
@@ -541,6 +559,10 @@ define(function (require) {
             url += '/form/';
             return url;
         }
+    });
+
+    Forms.Login = Forms.Model.extend({
+        url: '/adminapi/login/'
     });
 
     return Forms;
