@@ -9,6 +9,8 @@ define(function (require) {
 
     Views.Login = Backbone.View.extend({
         render: function () {
+            $('.logout').hide();
+
             this.$el.html(Templates.Login());
 
             var login_form_model = new Forms.Login();
@@ -16,7 +18,7 @@ define(function (require) {
             var login_form_view = new Forms.View({
                 model: login_form_model,
                 spotcheck: true,
-                redirect_url: '/'
+                redirect_url: '/#/apps/'
             });
             this.$('.login_form').html(login_form_view.el);
             login_form_model.fetch();
@@ -35,6 +37,7 @@ define(function (require) {
         },
 
         render: function () {
+            $('.logout').show();
             this.$el.html(Templates.AppModels({app_list: this.model.attributes.app_list}));
             this.delegateEvents();
             return this;
@@ -50,6 +53,7 @@ define(function (require) {
         },
 
         render: function () {
+            $('.logout').show();
             this.$el.html(Templates.ModelInstances({model_data: this.model.attributes}));
             this.delegateEvents();
             return this;
@@ -66,6 +70,7 @@ define(function (require) {
         },
 
         render: function () {
+            $('.logout').show();
             this.$el.html(Templates.ModelInstance({model_data: this.model.attributes}));
 
             var instance_form_model = new Forms.DjangoModelInstance({

@@ -1,9 +1,9 @@
 from django.contrib.admin.sites import site
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.serializers.json import simplejson as json
 from django.forms import ModelForm
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.middleware.csrf import get_token, CsrfViewMiddleware
 from django.utils.text import capfirst
 from django.views.decorators.csrf import csrf_exempt
@@ -39,6 +39,11 @@ def handle_login(request):
     response = HttpResponse(json.dumps(response_data, cls=LazyEncoder), mimetype="application/json")
     csrf_middleware.process_response(request, response)
     return response
+
+
+def handle_logout(request):
+    auth_logout(request)
+    return HttpResponseRedirect('/')
 
 
 def get_models(request, app_label=None):

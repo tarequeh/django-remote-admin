@@ -530,7 +530,7 @@ define(function (require) {
 
             if (this.redirect_url) {
                 window.location.replace(this.redirect_url);
-                window.location.reload(true);
+                // window.location.reload(true);
             } else if (this.reload_on_save) {
                 window.location.replace(window.location.href.split('#')[0]);
             } else {

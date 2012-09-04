@@ -6,6 +6,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # Examples:
     url(r'^login/$', 'adminapi.apps.adminapi.views.handle_login', name='adminapi_handle_login'),
+    url(r'^logout/$', 'adminapi.apps.adminapi.views.handle_logout', name='adminapi_handle_logout'),
     url(r'^apps/$', 'adminapi.apps.adminapi.views.get_models', name='adminapi_get_all_models'),
     url(r'^apps/(?P<app_label>\w+)/models/$', 'adminapi.apps.adminapi.views.get_models', name='adminapi_get_models'),
     url(r'^apps/(?P<app_label>\w+)/models/(?P<model_name>\w+)/instances/$', 'adminapi.apps.adminapi.views.get_model_instances', name='adminapi_get_model_instances'),
