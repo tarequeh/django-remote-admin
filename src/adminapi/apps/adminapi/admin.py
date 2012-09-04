@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 
+from adminapi.apps.adminapi.models import UserProfile
+
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff',)
@@ -11,3 +13,4 @@ class UserAdmin(admin.ModelAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+admin.site.register(UserProfile)

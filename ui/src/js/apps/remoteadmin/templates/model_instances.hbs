@@ -1,5 +1,5 @@
 <h3><a href="#/apps/{{ model_data.app.label }}/">{{ model_data.app.title }}</a> - {{ model_data.title}}</h3>
-<a href="#/apps/{{ model_data.app.label }}/models/{{ model_data.name }}/instances/add/" class="add_model">Add {{ this.title }}</a>
+<a href="#/apps/{{ model_data.app.label }}/models/{{ model_data.name }}/instances/add/" class="add_model">Add {{ model_data.title }}</a>
 <div class="model_instances">
     <ul class="instance_header">
         {{# each model_data.header}}<li>{{ this }}</li>{{/each}}

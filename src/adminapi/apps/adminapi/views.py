@@ -164,7 +164,12 @@ def get_model_instances(request, app_label, model_name):
                 }
             }
 
-            if response_data['admin']['list_display']:
+            if '__str__' in response_data['admin']['list_display']:
+                instance_data['list_data']['rest'] = (model_instance.pk, unicode(model_instance),)
+
+                if not is_header_generated:
+                    response_data['header'] = ('ID', 'Title',)
+            else:
                 for instance_property_name in response_data['admin']['list_display']:
                     instance_property_value = getattr(model_instance, instance_property_name, '')
                     if callable(instance_property_value):
@@ -181,11 +186,6 @@ def get_model_instances(request, app_label, model_name):
                         response_data['header'].append(normalized_instance_property_name)
 
                     instance_data['list_data']['rest'].append(instance_property_value)
-            else:
-                instance_data['list_data']['rest'] = (model_instance.pk, unicode(model_instance),)
-
-                if not is_header_generated:
-                    response_data['header'] = ('ID', 'Title',)
 
             if not is_header_generated:
                 is_header_generated = True
