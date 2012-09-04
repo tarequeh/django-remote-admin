@@ -18,7 +18,7 @@ define(function (require) {
             var login_form_view = new Forms.View({
                 model: login_form_model,
                 spotcheck: true,
-                redirect_url: '/#/apps/'
+                redirect_url: '#/apps/'
             });
             this.$('.login_form').html(login_form_view.el);
             login_form_model.fetch();

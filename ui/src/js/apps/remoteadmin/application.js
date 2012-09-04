@@ -16,7 +16,7 @@ define(function (require) {
                     // Ignore non 200 codes that don't indicate errors
                     return false;
                 } else if (xhr.status === 401) {
-                    window.location.replace('/#/login/');
+                    window.location.hash = '#/login/';
                 }
             });
         },
