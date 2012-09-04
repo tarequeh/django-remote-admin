@@ -182,6 +182,7 @@ define(function (require) {
             options = options || {};
             var messages = options.messages || [];
             var field_name, field, map_errors;
+            var readonly_fields = [];
 
             $(this.el).html(Templates.Form.Base({form: this.model.attributes, messages: messages}));
             // Render field
@@ -192,6 +193,12 @@ define(function (require) {
                     field = this.model.attributes.fields[field_name];
                     map_errors = _.indexOf(this.spotcheck_fields, field_name) >= 0;
                     this.$('.fieldsets').append(field.renderer({field: field, map_errors: map_errors}));
+                }
+
+                if (!this.editable) {
+                    readonly_fields.push(field_name);
+                } else if (field.readonly) {
+                    readonly_fields.push(field_name);
                 }
             }
 
@@ -211,20 +218,26 @@ define(function (require) {
 
             this.delegateEvents();
 
-            var readonly_fields = [];
+            // Construct readonly fields selector and make them immutable
+            var readonly_fields_selector, readonly_fields_selector_param = '', index;
 
-            if (!this.editable) {
-                // All fields are readonly
-                readonly_fields = this.$('input, select, textarea').not('input[type=button]');
+            for (index = 0; index < readonly_fields.length; index += 1) {
+                field_name = readonly_fields[index];
+                readonly_fields_selector_param += '[for=' + field_name + ']';
+
+                if (index < readonly_fields.length - 1) {
+                    readonly_fields_selector_param += ', ';
+                }
             }
 
             if (readonly_fields.length) {
-                readonly_fields.off();
-                readonly_fields.on('click focus mousedown mouseenter', function (event) {
+                readonly_fields_selector = this.$(readonly_fields_selector_param).find('input, select, textarea');
+                readonly_fields_selector.off();
+                readonly_fields_selector.on('click focus mousedown mouseenter', function (event) {
                     event.preventDefault();
                     return false;
                 });
-                readonly_fields.fadeTo('fast', 0.8);
+                readonly_fields_selector.fadeTo('fast', 0.5);
             }
 
             return this;
