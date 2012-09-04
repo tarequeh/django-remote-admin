@@ -1,6 +1,5 @@
 from django.contrib.admin.sites import site
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.core.serializers.json import simplejson as json
 from django.forms import ModelForm
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -10,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django_remote_forms.forms import RemoteForm
 
+from adminapi.apps.adminapi.forms import LoginForm
 from adminapi.apps.adminapi.utils import LazyEncoder
 
 
@@ -24,12 +24,12 @@ def handle_login(request):
         request.POST = json.loads(request.raw_post_data)
         csrf_middleware.process_view(request, None, None, None)
         if 'data' in request.POST:
-            form = AuthenticationForm(data=request.POST['data'])
+            form = LoginForm(data=request.POST['data'])
             if form.is_valid():
                 if not request.POST['meta']['validate']:
                     auth_login(request, form.get_user())
     else:
-        form = AuthenticationForm(request)
+        form = LoginForm(request)
         response_data['csrfmiddlewaretoken'] = get_token(request)
 
     if form is not None:
