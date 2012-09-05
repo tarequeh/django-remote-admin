@@ -31,7 +31,7 @@ class UserCreationForm(DjangoUserCreationForm):
 
     def clean_username(self):
         cleaned_username = self.cleaned_data.get('username')
-        if self.instance is not None and cleaned_username == self.instance.username:
+        if self.instance.pk and cleaned_username == self.instance.username:
             return cleaned_username
 
         return super(UserCreationForm, self).clean_username()
@@ -39,7 +39,7 @@ class UserCreationForm(DjangoUserCreationForm):
     def save(self, commit=True):
         user = super(DjangoUserCreationForm, self).save(commit=False)
 
-        if self.instance is None or (self.instance is not None and self.instance.password != self.cleaned_data["password"]):
+        if not self.instance.pk or self.initial['password'] != self.cleaned_data["password"]:
             user.set_password(self.cleaned_data["password"])
 
         if commit:
