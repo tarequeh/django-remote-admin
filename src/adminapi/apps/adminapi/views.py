@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django_remote_forms.forms import RemoteForm
 
+from adminapi.apps.adminapi.constants import ADMIN_FORM_OVERRIDES
 from adminapi.apps.adminapi.forms import LoginForm
 from adminapi.apps.adminapi.utils import LazyEncoder
 
@@ -52,10 +53,8 @@ def get_models(request, app_label=None):
     if not request.user.is_authenticated():
         return HttpResponse('Unauthorized request', status=401)
 
-    has_module_perms = False
-    if app_label is None:
-        if request.user.is_staff or request.user.is_superuser:
-            has_module_perms = True
+    if request.user.is_staff or request.user.is_superuser:
+        has_module_perms = True
     else:
         has_module_perms = request.user.has_module_perms(app_label)
 
@@ -70,7 +69,13 @@ def get_models(request, app_label=None):
             current_app_label = model._meta.app_label
 
         is_new_app = True
-        current_app_dict = {}
+        current_app_dict = {
+            'label': current_app_label,
+            'title': capfirst(current_app_label),
+            'has_module_perms': has_module_perms,
+            'models': []
+        }
+
         for app_dict in app_list:
             if app_dict['label'] == current_app_label:
                 current_app_dict = app_dict
@@ -78,7 +83,10 @@ def get_models(request, app_label=None):
                 break
 
         if has_module_perms:
-            perms = model_admin.get_model_perms(request)
+            if request.user.is_superuser:
+                perms = {'add': True, 'change': True, 'delete': True}
+            else:
+                perms = model_admin.get_model_perms(request)
 
             # Check whether user has any perm for this module.
             # If so, add the module to the model_list.
@@ -90,20 +98,12 @@ def get_models(request, app_label=None):
                     'perms': perms,
                 }
 
-                if current_app_dict:
-                    current_app_dict['models'].append(model_dict),
-                else:
-                    # First time around, now that we know there's
-                    # something to display, add in the necessary meta
-                    # information.
-                    current_app_dict = {
-                        'label': current_app_label,
-                        'title': capfirst(current_app_label),
-                        'has_module_perms': has_module_perms,
-                        'models': [model_dict]
-                    }
-        # Sort the models alphabetically within each app.
-        current_app_dict['models'].sort(key=lambda x: x['name'])
+                current_app_dict['models'].append(model_dict),
+
+        if 'models' in current_app_dict:
+            # Sort the models alphabetically within each app.
+            current_app_dict['models'].sort(key=lambda x: x['name'])
+
         if is_new_app:
             app_list.append(current_app_dict)
 
@@ -238,9 +238,12 @@ def handle_instance_form(request, app_label, model_name, instance_id=None):
 
         current_model = model
 
-        class CurrentModelForm(ModelForm):
-            class Meta:
-                model = current_model
+        CurrentModelForm = ADMIN_FORM_OVERRIDES.get(model_name, None)
+
+        if CurrentModelForm is None:
+            class CurrentModelForm(ModelForm):
+                class Meta:
+                    model = current_model
 
         if request.method == 'GET':
             # Return instance form for given model name

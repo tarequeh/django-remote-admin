@@ -8,9 +8,13 @@ define(function (require) {
         Views = {};
 
     Views.Login = Backbone.View.extend({
-        render: function () {
+        initialize: function(options) {
+            Backbone.View.prototype.initialize.call(this, options);
+            _.bindAll(this, 'render');
             $('.logout').hide();
+        },
 
+        render: function () {
             this.$el.html(Templates.Login());
 
             var login_form_model = new Forms.Login();
@@ -47,7 +51,6 @@ define(function (require) {
     Views.DjangoModelInstances = Backbone.View.extend({
         initialize: function (options) {
             Backbone.View.prototype.initialize.call(this, options);
-
             _.bindAll(this, 'render');
             this.model.bind('change', this.render);
         },
