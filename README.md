@@ -9,6 +9,9 @@ There are two components of django remote admin:
 
 django Remote Admin is dependent on [django-remote-forms](https://github.com/WiserTogether/django-remote-forms)
 
+My [djangocon US 2012 talk](http://www.slideshare.net/tarequeh/django-forms-in-a-web-api-world)
+discusses some aspects of the Remote Admin in context of Remote Forms
+
 ### Important
 
 * This is a proof of concept implementation for django-remote-forms
