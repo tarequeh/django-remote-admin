@@ -22,6 +22,10 @@ discusses some aspects of the Remote Admin in context of Remote Forms
       a custom ModelAdmin for User model and it's quite annoying)
     * Haven't tested if ModelMultipleChoiceField works (might need some work in forms.js)
 
+### License
+
+django-remote-admin is provided under MIT license. Feel free to use, hack and share.
+
 ## Setup
 
 There are 2 ways of getting the project set up
